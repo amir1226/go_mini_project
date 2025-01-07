@@ -1,14 +1,23 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/amir1226/go_mini_project/internal/database"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+
+	// Import the postgres driver
+	_ "github.com/lib/pq"
 )
+
+type apiConfig struct {
+	DB *database.Queries
+}
 
 func main() {
 	// Default to .env file in the current directory
@@ -16,6 +25,20 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatal("PORT must be set")
+	}
+
+	dbURL := os.Getenv("GOOSE_DBSTRING")
+	if dbURL == "" {
+		log.Fatal("DB URL must be set")
+	}
+
+	conn, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal("Error opening database connection", err)
+	}
+
+	apiCfg := apiConfig{
+		DB: database.New(conn),
 	}
 
 	log.Printf("Listening on port %s\n", port)
@@ -34,6 +57,7 @@ func main() {
 
 	v1Router.Get("/health", handlerReadiness)
 	v1Router.Get("/error", handlerError)
+	v1Router.Post("/users", apiCfg.handlerCreateUser)
 
 	router.Mount("/v1", v1Router)
 
@@ -42,7 +66,7 @@ func main() {
 		Addr:    ":" + port,
 	}
 
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
