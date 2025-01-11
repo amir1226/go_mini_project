@@ -45,14 +45,6 @@ func databaseFeedToFeed(dbFeed database.Feed) Feed {
 	}
 }
 
-func databaseFeedsToFeeds(dbFeeds []database.Feed) []Feed {
-	feeds := make([]Feed, len(dbFeeds))
-	for i, dbFeed := range dbFeeds {
-		feeds[i] = databaseFeedToFeed(dbFeed)
-	}
-	return feeds
-}
-
 type FeedFollow struct {
 	ID        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -69,4 +61,20 @@ func databaseFeedFollowToFeedFollow(dbFeedFollow database.FeedFollow) FeedFollow
 		UserID:    dbFeedFollow.UserID,
 		FeedID:    dbFeedFollow.FeedID,
 	}
+}
+
+func transformSlice[T any, U any](input []T, transform func(T) U) []U {
+	output := make([]U, len(input))
+	for i, v := range input {
+		output[i] = transform(v)
+	}
+	return output
+}
+
+func databaseFeedsToFeeds(dbFeeds []database.Feed) []Feed {
+	return transformSlice(dbFeeds, databaseFeedToFeed)
+}
+
+func databaseFeedFollowsToFeedFollows(dbFeedFollows []database.FeedFollow) []FeedFollow {
+	return transformSlice(dbFeedFollows, databaseFeedFollowToFeedFollow)
 }
