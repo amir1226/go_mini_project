@@ -15,14 +15,15 @@ type User struct {
 	APIKey    string    `json:"api_key"`
 }
 
-func databaseUserToUser(dbUser database.User) User {
-	return User{
-		ID:        dbUser.ID,
-		CreatedAt: dbUser.CreatedAt,
-		UpdatedAt: dbUser.UpdatedAt,
-		Name:      dbUser.Name,
-		APIKey:    dbUser.ApiKey,
-	}
+type Post struct {
+	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Title       string    `json:"title"`
+	Description *string   `json:"description"`
+	PublishedAt time.Time `json:"published_at"`
+	URL         string    `json:"url"`
+	FeedID      uuid.UUID `json:"feed_id"`
 }
 
 type Feed struct {
@@ -32,6 +33,16 @@ type Feed struct {
 	Name      string    `json:"name"`
 	URL       string    `json:"url"`
 	UserID    uuid.UUID `json:"user_id"`
+}
+
+func databaseUserToUser(dbUser database.User) User {
+	return User{
+		ID:        dbUser.ID,
+		CreatedAt: dbUser.CreatedAt,
+		UpdatedAt: dbUser.UpdatedAt,
+		Name:      dbUser.Name,
+		APIKey:    dbUser.ApiKey,
+	}
 }
 
 func databaseFeedToFeed(dbFeed database.Feed) Feed {
@@ -63,6 +74,23 @@ func databaseFeedFollowToFeedFollow(dbFeedFollow database.FeedFollow) FeedFollow
 	}
 }
 
+func databasePostToPost(dbPost database.Post) Post {
+	var description *string
+	if dbPost.Description.Valid {
+		description = &dbPost.Description.String
+	}
+	return Post{
+		ID:          dbPost.ID,
+		CreatedAt:   dbPost.CreatedAt,
+		UpdatedAt:   dbPost.UpdatedAt,
+		Title:       dbPost.Title,
+		Description: description,
+		PublishedAt: dbPost.PublishedAt,
+		URL:         dbPost.Url,
+		FeedID:      dbPost.FeedID,
+	}
+}
+
 func transformSlice[T any, U any](input []T, transform func(T) U) []U {
 	output := make([]U, len(input))
 	for i, v := range input {
@@ -77,4 +105,8 @@ func databaseFeedsToFeeds(dbFeeds []database.Feed) []Feed {
 
 func databaseFeedFollowsToFeedFollows(dbFeedFollows []database.FeedFollow) []FeedFollow {
 	return transformSlice(dbFeedFollows, databaseFeedFollowToFeedFollow)
+}
+
+func databasePostsToPosts(dbPosts []database.Post) []Post {
+	return transformSlice(dbPosts, databasePostToPost)
 }
