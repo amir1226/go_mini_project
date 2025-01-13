@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/amir1226/go_mini_project/internal/database"
 	"github.com/go-chi/chi"
@@ -40,6 +41,8 @@ func main() {
 	apiCfg := apiConfig{
 		DB: database.New(conn),
 	}
+
+	go startScraping(apiCfg.DB, 10, time.Minute)
 
 	log.Printf("Listening on port %s\n", port)
 
